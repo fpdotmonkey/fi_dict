@@ -7,7 +7,7 @@ pub struct Verb {
 
 impl Verb {
     pub fn create_table(table_name: &str) -> String {
-        let mut headings: Vec<String> = vec!["infinitive TEXT".to_string()];
+        let mut columns: Vec<String> = vec!["infinitive".to_string()];
         const PERSONS: [&str; 6] = [
             "first_singular",
             "second_singular",
@@ -20,9 +20,8 @@ impl Verb {
         for tense in TENSES.iter() {
             for positivity in 0..2 {
                 for person in PERSONS.iter() {
-                    // TODO: no trailing comma
-                    headings.push(format!(
-                        "{}{}_{} TEXT",
+                    columns.push(format!(
+                        "{}{}_{}",
                         person,
                         if positivity == 0 { "" } else { "_negative" },
                         tense
@@ -33,8 +32,17 @@ impl Verb {
 
         vec![
             format!("CREATE TABLE {} (", table_name),
-            headings.join(", "),
-            " );".to_string(),
+            columns
+                .iter()
+                .map(|column| format!("{} {}", column, "TEXT"))
+                .collect::<Vec<String>>()
+                .join(", "),
+            " );\n".to_string(),
+            format!(
+                "INSERT INTO {} ({}) VALUES ",
+                table_name,
+                columns.join(", ")
+            ),
         ]
         .join("")
     }
@@ -47,7 +55,7 @@ impl Verb {
 
     pub fn db_row(&self) -> String {
         format!(
-            "INSERT INTO verbs VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');",
+            "('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')",
             self.infinitive(),
             self.form().person(Person::FirstSingular).tense(Tense::Present),
             self.form().person(Person::SecondSingular).tense(Tense::Present),

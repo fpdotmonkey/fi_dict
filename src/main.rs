@@ -7,6 +7,8 @@ use std::io::BufRead;
 use verb::Verb;
 
 fn main() {
+    let now: std::time::Instant = std::time::Instant::now();
+
     const FI_DICT: &str = "kaikki.org-dictionary-Finnish.json";
 
     let file = std::fs::File::open(FI_DICT).unwrap();
@@ -20,30 +22,28 @@ fn main() {
         // .take(160)
         .collect();
 
-    let mut query: Vec<String> = vec![Verb::create_table("verbs")];
+    println!("JSON parsing: {}s", now.elapsed().as_secs());
+    let now: std::time::Instant = std::time::Instant::now();
 
-    for verb in verbs {
-        query.push(verb.db_row())
+    match std::fs::remove_file("verbit.sqlite") {
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => panic!("{}", error),
     }
 
-    let query: String = query.join("\n");
+    let query: String = vec![
+        Verb::create_table("verbs"),
+        verbs
+            .iter()
+            .map(|verb| verb.db_row())
+            .collect::<Vec<String>>()
+            .join(", "),
+        ";".to_string(),
+    ]
+    .join("");
+
     let connection = sqlite::open("verbit.sqlite").unwrap();
     connection.execute(query).unwrap();
 
-    let query = "SELECT * FROM verbs";
-    let mut statement = connection.prepare(query).unwrap();
-
-    while let Ok(sqlite::State::Row) = statement.next() {
-        println!(
-            "infinitive = {}",
-            statement.read::<String, _>("infinitive").unwrap()
-        );
-        println!(
-            "second_singular_negative_past = {}",
-            statement
-                .read::<String, _>("second_singular_negative_past")
-                .unwrap()
-        );
-        println!();
-    }
+    println!("SQLite generation: {}ms", now.elapsed().as_millis());
 }
