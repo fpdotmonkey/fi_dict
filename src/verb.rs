@@ -1,4 +1,4 @@
-use serde_json::json;
+use crate::kaikki;
 
 #[derive(Debug)]
 pub struct Verb {
@@ -47,9 +47,9 @@ impl Verb {
         .join("")
     }
 
-    pub fn new(word_data: serde_json::Value) -> Result<Self, &'static str> {
+    pub fn new(word_data: &kaikki::Sana) -> Result<Self, &'static str> {
         Ok(Self {
-            data: Data::from_json(word_data)?,
+            data: Data::from_sana(word_data)?,
         })
     }
 
@@ -186,14 +186,13 @@ struct Data {
 }
 
 impl Data {
-    fn from_json(word_data: serde_json::Value) -> Result<Data, &'static str> {
-        if word_data["pos"] != "verb" || word_data["head_templates"][0]["args"]["2"] != "verb" {
+    fn from_sana(word_data: &kaikki::Sana) -> Result<Data, &'static str> {
+        if !word_data.is_a_verb() {
             return Err("word isn't the dictionary verb");
         }
-        let Some(infinitive) = &word_data["head_templates"][0]["expansion"].as_str() else {
+        let Some(infinitive) = word_data.infinitive() else {
             return Err("no infinitive form");
         };
-        let infinitive: String = infinitive.to_string();
         let mut present: Inflections = Inflections {
             positive: Default::default(),
             negative: Default::default(),
@@ -209,7 +208,7 @@ impl Data {
         const TENSE_TAGS: [&str; 2] = ["present", "past"];
         const MOOD_TAG: &str = "indicative";
 
-        let Some(forms): Option<&Vec<_>> = word_data["forms"].as_array() else {
+        let Some(forms): Option<&Vec<kaikki::Form>> = word_data.forms() else {
             return Err("no forms");
         };
 
@@ -226,25 +225,15 @@ impl Data {
                         words[i] = forms
                             .iter()
                             .find(|&form| {
-                                let empty_vec = vec![];
-                                let form_tags = std::collections::HashSet::from_iter(
-                                    form["tags"]
-                                        .as_array()
-                                        .unwrap_or(&empty_vec)
-                                        .iter()
-                                        .filter_map(|value| value.as_str()),
-                                );
-                                form_tags.is_superset(&tags)
+                                form.tags().is_superset(&tags)
                                     && (if positivity == 0 {
-                                        !form_tags.contains(NEGATIVE_TAG)
+                                        !form.tags().contains(NEGATIVE_TAG)
                                     } else {
-                                        form_tags.contains(NEGATIVE_TAG)
+                                        form.tags().contains(NEGATIVE_TAG)
                                     })
                             })
-                            .unwrap_or(&json!(null))["form"]
-                            .as_str()
-                            .unwrap_or("-")
-                            .to_string();
+                            .map(|form| form.name().to_string())
+                            .unwrap_or("-".to_string());
                         i += 1;
                     }
                 }
@@ -264,7 +253,7 @@ impl Data {
         Ok(Data {
             present,
             past,
-            infinitive,
+            infinitive: infinitive.to_string(),
         })
     }
 

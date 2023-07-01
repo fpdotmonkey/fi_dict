@@ -1,10 +1,10 @@
 #[doc(inline)]
 pub use std;
 
+mod kaikki;
 mod verb;
 
 use std::io::BufRead;
-use verb::Verb;
 
 fn main() {
     let now: std::time::Instant = std::time::Instant::now();
@@ -14,15 +14,23 @@ fn main() {
     let file = std::fs::File::open(FI_DICT).unwrap();
     let reader = std::io::BufReader::new(file);
 
-    let verbs: Vec<Verb> = reader
+    println!("parsing from JSON");
+    let words: Vec<kaikki::Sana> = reader
         .lines()
-        .filter_map(|word_data| {
-            verb::Verb::new(serde_json::from_str(&word_data.unwrap()).unwrap()).ok()
-        })
         // .take(160)
+        .filter_map(|word_data| kaikki::Sana::from_json(&word_data.unwrap()))
         .collect();
 
-    println!("JSON parsing: {}s", now.elapsed().as_secs());
+    let verbs: Vec<verb::Verb> = words
+        .iter()
+        .filter_map(|word| verb::Verb::new(word).ok())
+        .collect();
+
+    println!(
+        "parsing: {}s, {:.0}ms/word",
+        now.elapsed().as_secs(),
+        1000.0 * now.elapsed().as_secs_f64() / verbs.len() as f64
+    );
     let now: std::time::Instant = std::time::Instant::now();
 
     match std::fs::remove_file("verbit.sqlite") {
@@ -32,7 +40,7 @@ fn main() {
     }
 
     let query: String = vec![
-        Verb::create_table("verbs"),
+        verb::Verb::create_table("verbs"),
         verbs
             .iter()
             .map(|verb| verb.db_row())
