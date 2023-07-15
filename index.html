@@ -92,18 +92,22 @@ function refresh_prompt() {
 function on_answer_guessed(event) {
   event.preventDefault();
   const guess = event["target"][0]["value"];
+  const feedback = document.getElementById("feedback");
   if (guess === answer) {
     correct += 1;
-    document.getElementById("feedback").textContent = "Oikea!";
+    feedback.textContent = "Oikea!";
+    feedback.setAttribute("title", "Correct!");
     document.getElementById("answer-input").value = "";
     new_prompt();
   } else {
     wrong += 1;
-    document.getElementById("feedback").textContent = "Väärin...";
+    feedback.textContent = "Väärin...";
+    feedback.setAttribute("title", "Wrong...");
   }
-  document
-    .getElementById("record")
-    .textContent = `oikea: ${correct}, väärin: ${wrong}`;
+  const record = document
+    .getElementById("record");
+  record.textContent = `oikea: ${correct}, väärin: ${wrong}`;
+  record.setAttribute("title", `correct: ${correct}, wrong: ${wrong}`);
 }
 
 function column_from(muoto) {
@@ -126,30 +130,40 @@ function column_from(muoto) {
 function on_muoto_change(event) {
   muoto = event["target"]["value"];
   var new_answer_label = "";
+  var new_answer_label_alt = "";
   switch (muoto) {
   case "muoto-minä":
     new_answer_label = "Minä muoto";
+    new_answer_label_alt = "Minä form";
     break;
   case "muoto-sinä":
     new_answer_label = "Sinä muoto";
+    new_answer_label_alt = "Sinä form";
     break;
   case "muoto-hän":
     new_answer_label = "Hän muoto";
+    new_answer_label_alt = "Hän form";
     break;
   case "muoto-me":
     new_answer_label = "Me muoto";
+    new_answer_label_alt = "Me form";
     break;
   case "muoto-te":
     new_answer_label = "Te muoto";
+    new_answer_label_alt = "Te form";
     break;
   case "muoto-he":
     new_answer_label = "He muoto";
+    new_answer_label_alt = "He form";
     break;
   default:
     new_answer_label = "????";
+    new_answer_label_alt = "Something's gone wrong";
     break;
   }
-  document.getElementById("answer-label").textContent = new_answer_label;
+  const answer_label = document.getElementById("answer-label");
+  answer_label.textContent = new_answer_label;
+  answer_label.setAttribute("title", new_answer_label_alt);
   refresh_prompt();
 }
 
@@ -159,7 +173,7 @@ function on_muoto_change(event) {
   <main>
     <h1 id="prompt">verbi</h1>
     <form id="answer" onsubmit="on_answer_guessed(event)">
-      <label id="answer-label">Sinä muoto</label>
+      <label id="answer-label" title="Sinä form">Sinä muoto</label>
       <input
         id="answer-input"
         type="text"
@@ -167,13 +181,17 @@ function on_muoto_change(event) {
         spellcheck="false"
         autocorrect="off"
         autocapitalize="none">
-      <input type="submit" value="Arvaa">
+      <input type="submit" value="Arvaa" title="Guess">
     </form>
-    <div id="feedback">Arvaa sanamuoto</div>
-    <div id="record"></div>
+    <div>
+      <span id="feedback" title="Guess the word form">Arvaa sanamuoto</span>
+    </div>
+    <div><span id="record"></span></div>
     <form onchange="on_muoto_change(event)">
       <fieldset id="muoto-selector">
-        <legend>Valitse muoto jota haluat harjoitella</legend>
+        <legend
+          title="Select the form which you want to practice"
+          >Valitse muoto jota haluat harjoitella</legend>
         <div class="person-set">
           <div>
             <input
