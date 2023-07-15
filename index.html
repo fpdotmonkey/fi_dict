@@ -4,17 +4,12 @@
   <meta charset="utf-8">
   <style>
 body {
-  font-size: 30pt;
-}
-
-input[type="text"]
-{
-    font-size:30px;
+  font-size: 25pt;
 }
 
 input[type="submit"]
 {
-    font-size:30px;
+    font-size:25px;
 }
 
 main {
@@ -29,15 +24,28 @@ legend {
   font-size: 20px;
 }
 
-#muoto-selector {
+.flex-row {
   display: flex;
   flex-flow: row;
-  width: 200px;
 }
 
-.person-set {
+.flex-column {
   display: flex;
   flex-flow: column;
+}
+
+.flex-align-end {
+  align-items: end;
+}
+
+.flex-no-shrink {
+  flex-shrink: 0;
+}
+
+.question-and-answer {
+  font-size: 50px;
+  font-family: serif;
+  width: 100%;
 }
 
 .muoto {
@@ -171,28 +179,41 @@ function on_muoto_change(event) {
 </head>
 <body>
   <main>
-    <h1 id="prompt">verbi</h1>
     <form id="answer" onsubmit="on_answer_guessed(event)">
-      <label id="answer-label" title="Sinä form">Sinä muoto</label>
-      <input
-        id="answer-input"
-        type="text"
-        placeholder="sanamuoto"
-        spellcheck="false"
-        autocorrect="off"
-        autocapitalize="none">
-      <input type="submit" value="Arvaa" title="Guess">
+      <div class="flex-row flex-align-end">
+        <label
+          id="answer-label"
+          class="flex-no-shrink"
+          for="prompt"
+          title="Sinä form"
+          >Sinä muoto</label>
+        <div style="width: 0.5em"></div>
+        <div class="flex-column">
+          <div id="prompt" class="question-and-answer">verbi</div>
+          <div class="flex-row">
+            <input
+              id="answer-input"
+              class="question-and-answer"
+              type="text"
+              placeholder="sanamuoto"
+              spellcheck="false"
+              autocorrect="off"
+              autocapitalize="none">
+            <input type="submit" value="Arvaa" title="Guess">
+          </div>
+        </div>
+      </div>
     </form>
     <div>
       <span id="feedback" title="Guess the word form">Arvaa sanamuoto</span>
     </div>
     <div><span id="record"></span></div>
     <form onchange="on_muoto_change(event)">
-      <fieldset id="muoto-selector">
+      <fieldset class="flex-row" style="width: 200px">
         <legend
           title="Select the form which you want to practice"
           >Valitse muoto jota haluat harjoitella</legend>
-        <div class="person-set">
+        <div class="flex-column">
           <div>
             <input
               type="radio"
@@ -222,7 +243,7 @@ function on_muoto_change(event) {
             <label for="muoto-hän" class="muoto">Hän</label>
           </div>
         </div>
-        <div class="person-set">
+        <div class="flex-column">
           <div>
             <input
               type="radio"
