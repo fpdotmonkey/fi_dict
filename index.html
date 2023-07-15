@@ -31,10 +31,13 @@ legend {
 
 #muoto-selector {
   display: flex;
-  justify-content: center;
-  flex-flow: column wrap;
-  height: 200px;
+  flex-flow: row;
   width: 200px;
+}
+
+.person-set {
+  display: flex;
+  flex-flow: column;
 }
 
 .muoto {
@@ -171,60 +174,64 @@ function on_muoto_change(event) {
     <form onchange="on_muoto_change(event)">
       <fieldset id="muoto-selector">
         <legend>Valitse muoto jota haluat harjoitella</legend>
-        <div>
-          <input
-            type="radio"
-            name="muoto"
-            value="muoto-minä"
-            id="muoto-minä"  
-            autocomplete="off">
-          <label for="muoto-minä" class="muoto">Minä</label>
+        <div class="person-set">
+          <div>
+            <input
+              type="radio"
+              name="muoto"
+              value="muoto-minä"
+              id="muoto-minä"  
+              autocomplete="off">
+            <label for="muoto-minä" class="muoto">Minä</label>
+          </div>
+          <div>
+            <input
+              type="radio"
+              checked="checked"
+              name="muoto"
+              value="muoto-sinä"
+              id="muoto-sinä"  
+              autocomplete="off">
+            <label for="muoto-sinä" class="muoto">Sinä</label>
+          </div>
+          <div>
+            <input
+              type="radio"
+              name="muoto"
+              value="muoto-hän"
+              id="muoto-hän" 
+              autocomplete="off">
+            <label for="muoto-hän" class="muoto">Hän</label>
+          </div>
         </div>
-        <div>
-          <input
-            type="radio"
-            checked="checked"
-            name="muoto"
-            value="muoto-sinä"
-            id="muoto-sinä"  
-            autocomplete="off">
-          <label for="muoto-sinä" class="muoto">Sinä</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="muoto"
-            value="muoto-hän"
-            id="muoto-hän" 
-            autocomplete="off">
-          <label for="muoto-hän" class="muoto">Hän</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="muoto"
-            value="muoto-me"
-            id="muoto-me"  
-            autocomplete="off">
-          <label for="muoto-me" class="muoto">Me</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="muoto"
-            value="muoto-te"
-            id="muoto-te"  
-            autocomplete="off">
-          <label for="muoto-te" class="muoto">Te</label>
-        </div>
-        <div>
-          <input
-            type="radio"
-            name="muoto"
-            value="muoto-he"
-            id="muoto-he"  
-            autocomplete="off">
-          <label for="muoto-he" class="muoto">He</label>
+        <div class="person-set">
+          <div>
+            <input
+              type="radio"
+              name="muoto"
+              value="muoto-me"
+              id="muoto-me"  
+              autocomplete="off">
+            <label for="muoto-me" class="muoto">Me</label>
+          </div>
+          <div>
+            <input
+              type="radio"
+              name="muoto"
+              value="muoto-te"
+              id="muoto-te"  
+              autocomplete="off">
+            <label for="muoto-te" class="muoto">Te</label>
+          </div>
+          <div>
+            <input
+              type="radio"
+              name="muoto"
+              value="muoto-he"
+              id="muoto-he"  
+              autocomplete="off">
+            <label for="muoto-he" class="muoto">He</label>
+          </div>
         </div>
       </fieldset>
     </form>
