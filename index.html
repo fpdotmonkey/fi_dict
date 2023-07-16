@@ -202,32 +202,32 @@ function on_muoto_change(event) {
   switch (pronoun) {
   case "muoto-minä":
     new_answer_label = new_answer_label.concat("Minä");
-    new_answer_label_alt = new_answer_label.concat("I");
+    new_answer_label_alt = new_answer_label_alt.concat("I");
     break;
   case "muoto-sinä":
     new_answer_label = new_answer_label.concat("Sinä");
-    new_answer_label_alt = new_answer_label.concat("You");
+    new_answer_label_alt = new_answer_label_alt.concat("You");
     break;
   case "muoto-hän":
     new_answer_label = new_answer_label.concat("Hän");
-    new_answer_label_alt = new_answer_label.concat("He/She/It");
+    new_answer_label_alt = new_answer_label_alt.concat("He/She/It");
     break;
   case "muoto-me":
     new_answer_label = new_answer_label.concat("Me");
-    new_answer_label_alt = new_answer_label.concat("We");
+    new_answer_label_alt = new_answer_label_alt.concat("We");
     break;
   case "muoto-te":
     new_answer_label = new_answer_label.concat("Te");
-    new_answer_label_alt = new_answer_label.concat("Y'all");
+    new_answer_label_alt = new_answer_label_alt.concat("Y'all");
     break;
   case "muoto-he":
     new_answer_label = new_answer_label.concat("He");
-    new_answer_label_alt = new_answer_label.concat("They");
+    new_answer_label_alt = new_answer_label_alt.concat("They");
     break;
   default:
     console.log("unknown pronoun");
     new_answer_label = new_answer_label.concat("????");
-    new_answer_label_alt = new_answer_label.concat("????");
+    new_answer_label_alt = new_answer_label_alt.concat("????");
     break;
   }
 
@@ -247,8 +247,8 @@ function on_muoto_change(event) {
           id="answer-label"
           class="flex-no-shrink"
           for="prompt"
-          title="Sinä form"
-          >Sinä muoto</label>
+          title="You"
+          >Sinä</label>
         <div style="width: 0.5em"></div>
         <div class="flex-column">
           <div id="prompt" class="question-and-answer">verbi</div>
