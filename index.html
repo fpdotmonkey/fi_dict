@@ -69,7 +69,7 @@ const sql_js = initSqlJs(config)
       db = new SQL.Database(new Uint8Array(db_request.response));
       new_prompt();
     };
-    db_request.open("GET", "../verbit.sqlite", true);
+    db_request.open("GET", "verbit.sqlite", true);
     db_request.send();
   });
 
