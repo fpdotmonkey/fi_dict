@@ -1,103 +1,269 @@
+use crate::inflection;
 use crate::kaikki;
+use crate::table::Table;
+
+pub fn extract(words: Vec<kaikki::Sana>) -> Vec<Verb> {
+    words
+        .iter()
+        .filter_map(|word| Verb::new(word).ok())
+        .collect()
+}
+
+pub fn create_table(table_name: &'static str, verbs: Vec<Verb>) -> String {
+    Verb::create_table_with_data(table_name, verbs)
+}
 
 #[derive(Debug)]
 pub struct Verb {
-    data: Data,
+    infinitive: String,
+    first_singular_present: String,
+    second_singular_present: String,
+    third_singular_present: String,
+    first_plural_present: String,
+    second_plural_present: String,
+    third_plural_present: String,
+    first_singular_negative_present: String,
+    second_singular_negative_present: String,
+    third_singular_negative_present: String,
+    first_plural_negative_present: String,
+    second_plural_negative_present: String,
+    third_plural_negative_present: String,
+    first_singular_past: String,
+    second_singular_past: String,
+    third_singular_past: String,
+    first_plural_past: String,
+    second_plural_past: String,
+    third_plural_past: String,
+    first_singular_negative_past: String,
+    second_singular_negative_past: String,
+    third_singular_negative_past: String,
+    first_plural_negative_past: String,
+    second_plural_negative_past: String,
+    third_plural_negative_past: String,
+
+    inflection: Option<inflection::Conjugation>,
+    gradation: Option<inflection::Gradation>,
 }
 
 impl Verb {
-    pub fn create_table(table_name: &str) -> String {
-        let mut columns: Vec<String> = vec!["infinitive".to_string()];
-        const PERSONS: [&str; 6] = [
-            "first_singular",
-            "second_singular",
-            "third_singular",
-            "first_plural",
-            "second_plural",
-            "third_plural",
-        ];
-        const TENSES: [&str; 2] = ["present", "past"];
-        for tense in TENSES.iter() {
-            for positivity in 0..2 {
-                for person in PERSONS.iter() {
-                    columns.push(format!(
-                        "{}{}_{}",
-                        person,
-                        if positivity == 0 { "" } else { "_negative" },
-                        tense
-                    ));
-                }
-            }
-        }
-
-        vec![
-            format!("CREATE TABLE {} (", table_name),
-            columns
-                .iter()
-                .map(|column| format!("{} {}", column, "TEXT"))
-                .collect::<Vec<String>>()
-                .join(", "),
-            " );\n".to_string(),
-            format!(
-                "INSERT INTO {} ({}) VALUES ",
-                table_name,
-                columns.join(", ")
-            ),
-        ]
-        .join("")
-    }
-
-    pub fn new(word_data: &kaikki::Sana) -> Result<Self, &'static str> {
+    fn new(word_data: &kaikki::Sana) -> Result<Self, &'static str> {
+        let data = Data::from_sana(word_data)?;
         Ok(Self {
-            data: Data::from_sana(word_data)?,
+            infinitive: data.infinitive().to_string(),
+            first_singular_present: data
+                .form()
+                .person(Person::FirstSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            second_singular_present: data
+                .form()
+                .person(Person::SecondSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            third_singular_present: data
+                .form()
+                .person(Person::ThirdSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            first_plural_present: data
+                .form()
+                .person(Person::FirstPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            second_plural_present: data
+                .form()
+                .person(Person::SecondPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            third_plural_present: data
+                .form()
+                .person(Person::ThirdPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            first_singular_negative_present: data
+                .form()
+                .negative()
+                .person(Person::FirstSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            second_singular_negative_present: data
+                .form()
+                .negative()
+                .person(Person::SecondSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            third_singular_negative_present: data
+                .form()
+                .negative()
+                .person(Person::ThirdSingular)
+                .tense(Tense::Present)
+                .to_string(),
+            first_plural_negative_present: data
+                .form()
+                .negative()
+                .person(Person::FirstPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            second_plural_negative_present: data
+                .form()
+                .negative()
+                .person(Person::SecondPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            third_plural_negative_present: data
+                .form()
+                .negative()
+                .person(Person::ThirdPlural)
+                .tense(Tense::Present)
+                .to_string(),
+            first_singular_past: data
+                .form()
+                .person(Person::FirstSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            second_singular_past: data
+                .form()
+                .person(Person::SecondSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            third_singular_past: data
+                .form()
+                .person(Person::ThirdSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            first_plural_past: data
+                .form()
+                .person(Person::FirstPlural)
+                .tense(Tense::Past)
+                .to_string(),
+            second_plural_past: data
+                .form()
+                .person(Person::SecondPlural)
+                .tense(Tense::Past)
+                .to_string(),
+            third_plural_past: data
+                .form()
+                .person(Person::ThirdPlural)
+                .tense(Tense::Past)
+                .to_string(),
+            first_singular_negative_past: data
+                .form()
+                .negative()
+                .person(Person::FirstSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            second_singular_negative_past: data
+                .form()
+                .negative()
+                .person(Person::SecondSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            third_singular_negative_past: data
+                .form()
+                .negative()
+                .person(Person::ThirdSingular)
+                .tense(Tense::Past)
+                .to_string(),
+            first_plural_negative_past: data
+                .form()
+                .negative()
+                .person(Person::FirstPlural)
+                .tense(Tense::Past)
+                .to_string(),
+            second_plural_negative_past: data
+                .form()
+                .negative()
+                .person(Person::SecondPlural)
+                .tense(Tense::Past)
+                .to_string(),
+            third_plural_negative_past: data
+                .form()
+                .negative()
+                .person(Person::ThirdPlural)
+                .tense(Tense::Past)
+                .to_string(),
+
+            inflection: data.conjugation,
+            gradation: data.gradation,
         })
     }
+}
 
-    pub fn db_row(&self) -> String {
-        format!(
-            "('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')",
-            self.infinitive(),
-            self.form().person(Person::FirstSingular).tense(Tense::Present),
-            self.form().person(Person::SecondSingular).tense(Tense::Present),
-            self.form().person(Person::ThirdSingular).tense(Tense::Present),
-            self.form().person(Person::FirstPlural).tense(Tense::Present),
-            self.form().person(Person::SecondPlural).tense(Tense::Present),
-            self.form().person(Person::ThirdPlural).tense(Tense::Present),
-            self.form().negative().person(Person::FirstSingular).tense(Tense::Present),
-            self.form().negative().person(Person::SecondSingular).tense(Tense::Present),
-            self.form().negative().person(Person::ThirdSingular).tense(Tense::Present),
-            self.form().negative().person(Person::FirstPlural).tense(Tense::Present),
-            self.form().negative().person(Person::SecondPlural).tense(Tense::Present),
-            self.form().negative().person(Person::ThirdPlural).tense(Tense::Present),
-            self.form().person(Person::FirstSingular).tense(Tense::Past),
-            self.form().person(Person::SecondSingular).tense(Tense::Past),
-            self.form().person(Person::ThirdSingular).tense(Tense::Past),
-            self.form().person(Person::FirstPlural).tense(Tense::Past),
-            self.form().person(Person::SecondPlural).tense(Tense::Past),
-            self.form().person(Person::ThirdPlural).tense(Tense::Past),
-            self.form().negative().person(Person::FirstSingular).tense(Tense::Past),
-            self.form().negative().person(Person::SecondSingular).tense(Tense::Past),
-            self.form().negative().person(Person::ThirdSingular).tense(Tense::Past),
-            self.form().negative().person(Person::FirstPlural).tense(Tense::Past),
-            self.form().negative().person(Person::SecondPlural).tense(Tense::Past),
-            self.form().negative().person(Person::ThirdPlural).tense(Tense::Past),
-        )
+impl Table for Verb {
+    fn columns() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("infinitive", "TEXT"),
+            ("first_singular_present", "TEXT"),
+            ("second_singular_present", "TEXT"),
+            ("third_singular_present", "TEXT"),
+            ("first_plural_present", "TEXT"),
+            ("second_plural_present", "TEXT"),
+            ("third_plural_present", "TEXT"),
+            ("first_singular_negative_present", "TEXT"),
+            ("second_singular_negative_present", "TEXT"),
+            ("third_singular_negative_present", "TEXT"),
+            ("first_plural_negative_present", "TEXT"),
+            ("second_plural_negative_present", "TEXT"),
+            ("third_plural_negative_present", "TEXT"),
+            ("first_singular_past", "TEXT"),
+            ("second_singular_past", "TEXT"),
+            ("third_singular_past", "TEXT"),
+            ("first_plural_past", "TEXT"),
+            ("second_plural_past", "TEXT"),
+            ("third_plural_past", "TEXT"),
+            ("first_singular_negative_past", "TEXT"),
+            ("second_singular_negative_past", "TEXT"),
+            ("third_singular_negative_past", "TEXT"),
+            ("first_plural_negative_past", "TEXT"),
+            ("second_plural_negative_past", "TEXT"),
+            ("third_plural_negative_past", "TEXT"),
+            ("inflection", "INT"),
+            ("gradation", "INT"),
+        ]
+    }
+    fn row(&self) -> Vec<std::string::String> {
+        vec![
+            self.infinitive.to_string(),
+            self.first_singular_present.to_string(),
+            self.second_singular_present.to_string(),
+            self.third_singular_present.to_string(),
+            self.first_plural_present.to_string(),
+            self.second_plural_present.to_string(),
+            self.third_plural_present.to_string(),
+            self.first_singular_negative_present.to_string(),
+            self.second_singular_negative_present.to_string(),
+            self.third_singular_negative_present.to_string(),
+            self.first_plural_negative_present.to_string(),
+            self.second_plural_negative_present.to_string(),
+            self.third_plural_negative_present.to_string(),
+            self.first_singular_past.to_string(),
+            self.second_singular_past.to_string(),
+            self.third_singular_past.to_string(),
+            self.first_plural_past.to_string(),
+            self.second_plural_past.to_string(),
+            self.third_plural_past.to_string(),
+            self.first_singular_negative_past.to_string(),
+            self.second_singular_negative_past.to_string(),
+            self.third_singular_negative_past.to_string(),
+            self.first_plural_negative_past.to_string(),
+            self.second_plural_negative_past.to_string(),
+            self.third_plural_negative_past.to_string(),
+            match &self.inflection {
+                Some(inflection) => inflection.kotus_type().to_string(),
+                None => "NULL".to_string(),
+            },
+            match &self.gradation {
+                Some(gradation) => gradation.kotus_type().to_string(),
+                None => "NULL".to_string(),
+            },
+        ]
     }
 
-    pub fn form(&self) -> NormalVerb {
-        NormalVerb {
-            word_data: &self.data,
-            // This defines default values
-            positive: true,
-            person: Person::FirstSingular,
-            tense: Tense::Present,
-        }
-    }
-
-    pub fn infinitive(&self) -> Infinitive {
-        Infinitive {
-            word_data: &self.data,
-        }
+    fn foreign_keys() -> std::option::Option<Vec<(&'static str, &'static str, &'static str)>> {
+        Some(vec![
+            ("inflection", "inflections", "kotus_type"),
+            ("gradation", "gradations", "kotus_type"),
+        ])
     }
 }
 
@@ -183,14 +349,19 @@ struct Data {
     present: Inflections,
     past: Inflections,
     infinitive: String,
+    conjugation: Option<inflection::Conjugation>,
+    gradation: Option<inflection::Gradation>,
 }
 
 impl Data {
     fn from_sana(word_data: &kaikki::Sana) -> Result<Data, &'static str> {
+        if word_data.expansion() == Some(&"puhua".to_string()) {
+            println!("puhua!");
+        }
         if !word_data.is_a_verb() {
             return Err("word isn't the dictionary verb");
         }
-        let Some(infinitive) = word_data.infinitive() else {
+        let Some(infinitive) = word_data.expansion() else {
             return Err("no infinitive form");
         };
         let mut present: Inflections = Inflections {
@@ -211,6 +382,27 @@ impl Data {
         let Some(forms): Option<&Vec<kaikki::Form>> = word_data.forms() else {
             return Err("no forms");
         };
+
+        let conjugation: Option<inflection::Conjugation> = match word_data.inflection_templates() {
+            Some(templates) => {
+                if templates.is_empty() {
+                    None
+                } else {
+                    if templates[0].name() == "fi-decl-koira" {
+                        println!("{infinitive}");
+                    }
+                    inflection::Conjugation::from_template(templates[0].name(), infinitive)
+                }
+            }
+            None => None,
+        };
+        let mut gradation: Option<inflection::Gradation> = None;
+        if let Some(conjugation_class) = forms
+            .iter()
+            .find(|form| form.source() == "conjugation" && form.tags().contains("class"))
+        {
+            gradation = inflection::Gradation::from_template(conjugation_class.name());
+        }
 
         for tense in TENSE_TAGS.iter() {
             let mut positive: [String; 6] = Default::default();
@@ -254,6 +446,8 @@ impl Data {
             present,
             past,
             infinitive: infinitive.to_string(),
+            gradation,
+            conjugation,
         })
     }
 
@@ -269,6 +463,20 @@ impl Data {
                 Tense::Past => self.past.inflection(positive, person),
             },
         }
+    }
+
+    pub fn form(&self) -> NormalVerb {
+        NormalVerb {
+            word_data: self,
+            // This defines default values
+            positive: true,
+            person: Person::FirstSingular,
+            tense: Tense::Present,
+        }
+    }
+
+    pub fn infinitive(&self) -> Infinitive {
+        Infinitive { word_data: self }
     }
 }
 

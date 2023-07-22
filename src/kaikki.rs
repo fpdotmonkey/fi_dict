@@ -23,17 +23,21 @@ impl Sana {
     }
 
     pub fn is_a_verb(&self) -> bool {
-        if let Some(secondary_pos) = &self.head_templates {
-            if let Some(secondary_pos) = secondary_pos.get(0) {
-                if let Some(_secondary_pos) = secondary_pos.args.get("2") {
-                    return self.pos == "verb";
+        if let Some(forms) = &self.forms {
+            if !forms.is_empty() {
+                if let Some(secondary_pos) = &self.head_templates {
+                    if let Some(secondary_pos) = secondary_pos.get(0) {
+                        if let Some(secondary_pos) = secondary_pos.args.get("2") {
+                            return self.pos == "verb" && secondary_pos == "verb";
+                        }
+                    }
                 }
             }
         }
         false
     }
 
-    pub fn infinitive(&self) -> Option<&String> {
+    pub fn expansion(&self) -> Option<&String> {
         if let Some(head_template) = &self.head_templates {
             if let Some(head_template) = head_template.get(0) {
                 return Some(&head_template.expansion);
@@ -45,6 +49,10 @@ impl Sana {
     pub fn forms(&self) -> Option<&Vec<Form>> {
         self.forms.as_ref()
     }
+
+    pub fn inflection_templates(&self) -> Option<&Vec<InflectionTemplate>> {
+        self.inflection_templates.as_ref()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -55,9 +63,15 @@ struct HeadTemplate {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct InflectionTemplate {
+pub struct InflectionTemplate {
     name: String,
     args: std::collections::HashMap<String, String>,
+}
+
+impl InflectionTemplate {
+    pub fn name(&self) -> &String {
+        &self.name
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -68,12 +82,16 @@ pub struct Form {
 }
 
 impl Form {
-    pub fn tags(&self) -> std::collections::HashSet<&str> {
-        std::collections::HashSet::from_iter(self.tags.iter().map(|string| string.as_str()))
-    }
-
     pub fn name(&self) -> &String {
         &self.form
+    }
+
+    pub fn source(&self) -> &String {
+        &self.source
+    }
+
+    pub fn tags(&self) -> std::collections::HashSet<&str> {
+        std::collections::HashSet::from_iter(self.tags.iter().map(|string| string.as_str()))
     }
 }
 
