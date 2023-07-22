@@ -1,3 +1,4 @@
+use crate::inflection;
 use crate::kaikki;
 
 #[derive(Debug)]
@@ -31,7 +32,7 @@ impl Verb {
         }
 
         vec![
-            format!("CREATE TABLE {} (", table_name),
+            format!("CREATE TABLE {table_name} ("),
             columns
                 .iter()
                 .map(|column| format!("{} {}", column, "TEXT"))
@@ -183,6 +184,8 @@ struct Data {
     present: Inflections,
     past: Inflections,
     infinitive: String,
+    inflection: Option<inflection::Inflection>,
+    gradation: Option<inflection::Gradation>,
 }
 
 impl Data {

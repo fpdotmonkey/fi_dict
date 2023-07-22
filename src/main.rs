@@ -1,6 +1,7 @@
 #[doc(inline)]
 pub use std;
 
+mod inflection;
 mod kaikki;
 mod verb;
 
@@ -39,7 +40,7 @@ fn main() {
         Err(error) => panic!("{}", error),
     }
 
-    let query: String = vec![
+    let verb_query: String = vec![
         verb::Verb::create_table("verbs"),
         verbs
             .iter()
@@ -51,7 +52,13 @@ fn main() {
     .join("");
 
     let connection = sqlite::open("verbit.sqlite").unwrap();
-    connection.execute(query).unwrap();
+    connection.execute(verb_query).unwrap();
+    connection
+        .execute(inflection::create_table("inflections"))
+        .unwrap();
+    connection
+        .execute(inflection::gradation_table("gradations"))
+        .unwrap();
 
     println!("SQLite generation: {}ms", now.elapsed().as_millis());
 }
