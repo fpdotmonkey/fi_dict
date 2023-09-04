@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
+use nanoserde::{DeJson, DeJsonState, SerJson};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Sana {
     pos: String,
     head_templates: Option<Vec<HeadTemplate>>,
@@ -18,8 +18,12 @@ pub struct Sana {
 }
 
 impl Sana {
-    pub fn from_json(data: &str) -> Option<Self> {
-        serde_json::from_str(data).ok()
+    pub fn from_json(json: String) -> Option<Self> {
+        let mut json_state = DeJsonState::default();
+        let mut chars = json.chars();
+        json_state.next(&mut chars);
+        json_state.next_tok(&mut chars).unwrap();
+        Self::de_json(&mut json_state, &mut chars).ok()
     }
 
     pub fn is_a_verb(&self) -> bool {
@@ -55,14 +59,14 @@ impl Sana {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct HeadTemplate {
     name: String,
     args: std::collections::HashMap<String, String>,
     expansion: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct InflectionTemplate {
     name: String,
     args: std::collections::HashMap<String, String>,
@@ -74,7 +78,7 @@ impl InflectionTemplate {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Form {
     form: String,
     source: String,
@@ -95,20 +99,20 @@ impl Form {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct EtymologyTemplate {
     name: String,
     args: std::collections::HashMap<String, String>,
     expansion: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct Derive {
     word: String,
     _dis1: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct Sense {
     links: Vec<Vec<String>>,
     topics: Option<Vec<String>>,
@@ -121,18 +125,18 @@ struct Sense {
     categories: Vec<Category>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct FormOf {
     word: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct AltOf {
     word: String,
     extra: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct Category {
     name: String,
     kind: String,
@@ -141,7 +145,7 @@ struct Category {
     _dis: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, SerJson, DeJson)]
 struct Synonym {
     word: String,
     sense: Option<String>,

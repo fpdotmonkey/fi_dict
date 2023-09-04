@@ -22,7 +22,7 @@ fn main() {
     let words: Vec<kaikki::Sana> = reader
         .lines()
         // .take(160)
-        .filter_map(|word_data| kaikki::Sana::from_json(&word_data.unwrap()))
+        .filter_map(|word_data| kaikki::Sana::from_json(word_data.unwrap()))
         .collect();
     println!(
         "JSON parsing: {}s, {:.3}ms/word",
