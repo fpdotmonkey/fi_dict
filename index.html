@@ -107,7 +107,7 @@ function on_answer_guessed(event) {
   event.preventDefault();
   const guess = event["target"][0]["value"];
   const feedback = document.getElementById("feedback");
-  if (guess === answer) {
+  if (guess.toLowerCase() === answer.toLowerCase()) {
     correct += 1;
     feedback.textContent = "Oikea!";
     feedback.setAttribute("title", "Correct!");
