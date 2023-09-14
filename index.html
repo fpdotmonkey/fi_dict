@@ -80,6 +80,10 @@ var tense = "tense-present";
 var prompt = null;
 var answer = null;
 var data = null;
+var conjugation = null;
+var conjugation_hint = null;
+var gradation = null;
+var gradation_hint = null;
 
 var correct = 0;
 var wrong = 0;
@@ -91,8 +95,10 @@ function new_prompt() {
   ).getAsObject({$start:1, $end:1});
   prompt = data["infinitive"];
   answer = data[column];
+  conjugation = data["inflection"];
+  gradation = data["gradation"];
+  prepare_hints();
   document.getElementById("prompt").textContent = prompt;
-  return [prompt, answer];
 }
 
 function refresh_prompt() {
@@ -101,9 +107,60 @@ function refresh_prompt() {
     `SELECT ${column} FROM verbs WHERE infinitive = '${prompt}'`
   ).getAsObject({$start:1, $end:1});
   answer = data[column];
+  prepare_hints()
+}
+
+function prepare_hints() {
+  const transition_symbol = "⇒"; // Rightwards Double Arrow, U+21d2
+  const conjugation_data = db.prepare(
+    `SELECT * FROM inflections WHERE conjugation = ${conjugation}`
+  ).getAsObject({$start:1, $end:1});
+  const gradation_data = db.prepare(
+    `SELECT * FROM gradations WHERE gradation = ${gradation}`
+  ).getAsObject({$start:1, $end:1});
+
+  switch (tense) {
+  case "tense-present":
+    conjugation_hint = 
+      `${conjugation_data["hint_infinitive"]} ${transition_symbol} ${conjugation_data["hint_present"]}`;
+    break;
+  case "tense-past":
+    conjugation_hint = 
+      `${conjugation_data["hint_infinitive"]} ${transition_symbol} ${conjugation_data["hint_past"]}`;
+    break;
+  default:
+    conjugation_hint = "No hint available, you can try looking it up";
+    break;
+  }
+
+  // TODO: give a correct hint for hän/he forms
+  if (gradation === 0 || conjugation_data["gradation_style"] == "None") {
+    gradation_hint = "No gradation";
+  } else {
+    var weak_form = gradation_data["weak"];
+    if (weak_form === "") {
+      weak_form = "∅"; // empty set, U+2205
+    }
+    switch (conjugation_data["gradation_style"]) {
+    case "StrongWeak":
+      gradation_hint =
+        `${gradation_data["strong"]} ${transition_symbol} ${weak_form}`;
+      break;
+    case "WeakStrong":
+      gradation_hint =
+        `${weak_form} ${transition_symbol} ${gradation_data["strong"]}`;
+      break;
+    default:
+      gradation_hint = "No hint available, you can try loooking it up";
+      break;
+    }
+  }
+  document.getElementById("hint-conjugation").textContent = "";
+  document.getElementById("hint-gradation").textContent = "";
 }
 
 function on_answer_guessed(event) {
+  // TODO: answers with apostrophe-like characters should accept '
   event.preventDefault();
   const guess = event["target"][0]["value"];
   const feedback = document.getElementById("feedback");
@@ -237,6 +294,14 @@ function on_muoto_change(event) {
   refresh_prompt();
 }
 
+function present_conjugation_hint() {
+  document.getElementById("hint-conjugation").textContent = conjugation_hint;
+}
+
+function present_gradation_hint() {
+  document.getElementById("hint-gradation").textContent = gradation_hint;
+}
+
   </script>
 </head>
 <body>
@@ -271,100 +336,121 @@ function on_muoto_change(event) {
     </div>
     <div><span id="record"></span></div>
     <div style="height: 1em"></div>
-    <form onchange="on_muoto_change(event)">
-      <fieldset style="width: 200px">
-        <legend>Valitse muoto jota haluat harjoitella</legend>
-        <div>
-          <input
-            type="checkbox" id="negative" name="negative" autocomplete="off">
-          <label for="negative" class="muoto">Negatiivi</label>
-        </div>
-        <label>Pronomini</label>
-        <div class="flex-row">
-          <div class="flex-column">
-            <div>
-              <input
-                type="radio"
-                name="muoto"
-                value="muoto-minä"
-                id="muoto-minä"
-                autocomplete="off">
-              <label for="muoto-minä" class="muoto">Minä</label>
-            </div>
-            <div>
-              <input
-                type="radio"
-                checked="checked"
-                name="muoto"
-                value="muoto-sinä"
-                id="muoto-sinä"
-                autocomplete="off">
-              <label for="muoto-sinä" class="muoto">Sinä</label>
-            </div>
-            <div>
-              <input
-                type="radio"
-                name="muoto"
-                value="muoto-hän"
-                id="muoto-hän"
-                autocomplete="off">
-              <label for="muoto-hän" class="muoto">Hän</label>
-            </div>
-          </div>
-          <div class="flex-column">
-            <div>
-              <input
-                type="radio"
-                name="muoto"
-                value="muoto-me"
-                id="muoto-me"
-                autocomplete="off">
-              <label for="muoto-me" class="muoto">Me</label>
-            </div>
-            <div>
-              <input
-                type="radio"
-                name="muoto"
-                value="muoto-te"
-                id="muoto-te"
-                autocomplete="off">
-              <label for="muoto-te" class="muoto">Te</label>
-            </div>
-            <div>
-              <input
-                type="radio"
-                name="muoto"
-                value="muoto-he"
-                id="muoto-he"
-                autocomplete="off">
-              <label for="muoto-he" class="muoto">He</label>
-            </div>
-          </div>
-        </div>
-        <label>Aikamuoto</label>
-        <div>
+    <div class="flex-row">
+      <form onchange="on_muoto_change(event)">
+        <fieldset style="width: 200px">
+          <legend>Valitse muoto jota haluat harjoitella</legend>
           <div>
             <input
-                type="radio"
-                checked="checked"
-                name="tense"
-                value="tense-present"
-                id="tense-present"
-                autocomplete="off">
-            <label for="tense-present" class="muoto">Preesens</label>
+              type="checkbox" id="negative" name="negative" autocomplete="off">
+            <label for="negative" class="muoto">Negatiivi</label>
           </div>
+          <label>Pronomini</label>
+          <div class="flex-row">
+            <div class="flex-column">
+              <div>
+                <input
+                  type="radio"
+                  name="muoto"
+                  value="muoto-minä"
+                  id="muoto-minä"
+                  autocomplete="off">
+                <label for="muoto-minä" class="muoto">Minä</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  checked="checked"
+                  name="muoto"
+                  value="muoto-sinä"
+                  id="muoto-sinä"
+                  autocomplete="off">
+                <label for="muoto-sinä" class="muoto">Sinä</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  name="muoto"
+                  value="muoto-hän"
+                  id="muoto-hän"
+                  autocomplete="off">
+                <label for="muoto-hän" class="muoto">Hän</label>
+              </div>
+            </div>
+            <div class="flex-column">
+              <div>
+                <input
+                  type="radio"
+                  name="muoto"
+                  value="muoto-me"
+                  id="muoto-me"
+                  autocomplete="off">
+                <label for="muoto-me" class="muoto">Me</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  name="muoto"
+                  value="muoto-te"
+                  id="muoto-te"
+                  autocomplete="off">
+                <label for="muoto-te" class="muoto">Te</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  name="muoto"
+                  value="muoto-he"
+                  id="muoto-he"
+                  autocomplete="off">
+                <label for="muoto-he" class="muoto">He</label>
+              </div>
+            </div>
+          </div>
+          <label>Aikamuoto</label>
           <div>
-            <input
-                type="radio"
-                name="tense"
-                value="tense-past"
-                id="tense-past"
-                autocomplete="off">
-            <label for="tense-past" class="muoto">Mennyt</label>
+            <div>
+              <input
+                  type="radio"
+                  checked="checked"
+                  name="tense"
+                  value="tense-present"
+                  id="tense-present"
+                  autocomplete="off">
+              <label for="tense-present" class="muoto">Preesens</label>
+            </div>
+            <div>
+              <input
+                  type="radio"
+                  name="tense"
+                  value="tense-past"
+                  id="tense-past"
+                  autocomplete="off">
+              <label for="tense-past" class="muoto">Mennyt</label>
+            </div>
           </div>
-        </div>
-      </fieldset>
-    </form>
+        </fieldset>
+      </form>
+      <form>
+        <fieldset style="width: 200px">
+          <legend>Hints/Vihjeet</legend>
+          <div class="flex-column">
+            <button
+              onclick="present_conjugation_hint()" type="button"
+            >Conjugation</button>
+            <div style="min-height: 110px">
+              <p id="hint-conjugation">-da -> -</p>
+            </div>
+            <button
+              onclick="present_gradation_hint()" type="button"
+            >Gradation</button>
+            <div style="min-height: 110px">
+              <p id="hint-gradation">-kk- -> -k-</p>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
   </main>
 </body>
 </html>
