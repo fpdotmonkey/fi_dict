@@ -368,6 +368,11 @@ pub fn gradation_table(table_name: &'static str) -> String {
             strong: "t",
             weak: "",
         },
+        GradationData {
+            gradation: Gradation::KApostrophe,
+            strong: "k",
+            weak: "k",
+        },
     ];
 
     GradationData::create_table_with_data(table_name, gradations)
@@ -445,6 +450,7 @@ impl Conjugation {
             "fi-conj-kaikaa" => Some(Conjugation::Kaikaa),
             "fi-conj-olla" => Some(Conjugation::Olla),
             "fi-conj-seistä" => Some(Conjugation::Seista),
+            "fi-conj-virkkaa" => Some(Conjugation::Kaivaa),
             // these templates note phrasal verbs where you need to
             // inflect non-verb words specially, which I skip for verbs
             "fi-infl-vp-accusative" => None,
@@ -466,6 +472,21 @@ impl Conjugation {
                 "tarttee" => Some(Conjugation::Tarttee),
                 _ => {
                     eprintln!("unhandled irregular word '{infinitive}'");
+                    None
+                }
+            },
+            "fi-conj" => match infinitive.as_str() {
+                "kutiaa" => Some(Conjugation::Selvita),
+                _ => {
+                    eprintln!("unhandled conjugation for '{infinitive}'");
+                    None
+                }
+            },
+            "fi-conj-vp-subj" => match infinitive.as_str() {
+                "hukka perii" => None, // only uses 3rd person
+                "pää on kuin Haminan kaupunki" => Some(Conjugation::Olla),
+                _ => {
+                    eprintln!("unhandled verb with subject '{infinitive}'");
                     None
                 }
             },
@@ -534,10 +555,11 @@ pub enum Gradation {
     GgG = 14,
     BbB = 15,
     T0 = 16,
+    KApostrophe = 17,
 }
 
 impl Gradation {
-    pub fn from_template(template: &String) -> Option<Self> {
+    pub fn from_template(template: &String, infinitive: &String) -> Option<Self> {
         match template.as_str() {
             "no gradation" => Some(Gradation::None),
             "kk-k gradation" => Some(Gradation::KkK),
@@ -557,10 +579,11 @@ impl Gradation {
             "gg-g gradation" => Some(Gradation::GgG),
             "bb-b gradation" => Some(Gradation::BbB),
             "t-∅ gradation" => Some(Gradation::T0),
+            "k-’ gradation" => Some(Gradation::KApostrophe),
             // the data isn't specifying the gradation, so likely it's None
             non_gradation if !non_gradation.contains("gradation") => Some(Gradation::None),
             _ => {
-                eprintln!("unknown gradation '{template}'");
+                eprintln!("unknown gradation '{template}' for '{infinitive}'");
                 None
             }
         }

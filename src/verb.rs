@@ -355,9 +355,6 @@ struct Data {
 
 impl Data {
     fn from_sana(word_data: &kaikki::Sana) -> Result<Data, &'static str> {
-        if word_data.expansion() == Some(&"puhua".to_string()) {
-            println!("puhua!");
-        }
         if !word_data.is_a_verb() {
             return Err("word isn't the dictionary verb");
         }
@@ -388,20 +385,16 @@ impl Data {
                 if templates.is_empty() {
                     None
                 } else {
-                    if templates[0].name() == "fi-decl-koira" {
-                        println!("{infinitive}");
-                    }
                     inflection::Conjugation::from_template(templates[0].name(), infinitive)
                 }
             }
             None => None,
         };
         let mut gradation: Option<inflection::Gradation> = None;
-        if let Some(conjugation_class) = forms
-            .iter()
-            .find(|form| form.source() == "conjugation" && form.tags().contains("class"))
-        {
-            gradation = inflection::Gradation::from_template(conjugation_class.name());
+        if let Some(conjugation_class) = forms.iter().find(|form| {
+            form.source() == Some(&"conjugation".to_string()) && form.tags().contains("class")
+        }) {
+            gradation = inflection::Gradation::from_template(conjugation_class.name(), infinitive);
         }
 
         for tense in TENSE_TAGS.iter() {

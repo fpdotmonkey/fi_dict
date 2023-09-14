@@ -30,13 +30,6 @@ fn main() {
         1000.0 * now.elapsed().as_secs_f64() / words.len() as f64
     );
 
-    println!(
-        "{:?}",
-        words
-            .iter()
-            .find(|word| word.expansion() == Some(&"puhua".to_string()))
-    );
-
     println!("parsing verb data");
     let now: std::time::Instant = std::time::Instant::now();
 

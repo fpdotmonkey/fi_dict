@@ -81,8 +81,8 @@ impl InflectionTemplate {
 #[derive(Debug, SerJson, DeJson)]
 pub struct Form {
     form: String,
-    source: String,
-    tags: Vec<String>,
+    source: Option<String>,
+    tags: Option<Vec<String>>,
 }
 
 impl Form {
@@ -90,12 +90,17 @@ impl Form {
         &self.form
     }
 
-    pub fn source(&self) -> &String {
-        &self.source
+    pub fn source(&self) -> Option<&String> {
+        self.source.as_ref()
     }
 
     pub fn tags(&self) -> std::collections::HashSet<&str> {
-        std::collections::HashSet::from_iter(self.tags.iter().map(|string| string.as_str()))
+        match &self.tags {
+            Some(tags) => {
+                std::collections::HashSet::from_iter(tags.iter().map(|string| string.as_str()))
+            }
+            None => std::collections::HashSet::new(),
+        }
     }
 }
 
@@ -114,7 +119,8 @@ struct Derive {
 
 #[derive(Debug, SerJson, DeJson)]
 struct Sense {
-    links: Vec<Vec<String>>,
+    links: Option<Vec<Vec<String>>>,
+    id: Option<String>,
     topics: Option<Vec<String>>,
     raw_glosses: Option<Vec<String>>,
     glosses: Option<Vec<String>>,
@@ -122,7 +128,8 @@ struct Sense {
     alt_of: Option<Vec<AltOf>>,
     tags: Option<Vec<String>>,
     to: Option<String>,
-    categories: Vec<Category>,
+    categories: Option<Vec<Category>>,
+    examples: Option<Vec<Example>>,
 }
 
 #[derive(Debug, SerJson, DeJson)]
@@ -133,7 +140,7 @@ struct FormOf {
 #[derive(Debug, SerJson, DeJson)]
 struct AltOf {
     word: String,
-    extra: String,
+    extra: Option<String>,
 }
 
 #[derive(Debug, SerJson, DeJson)]
@@ -149,4 +156,11 @@ struct Category {
 struct Synonym {
     word: String,
     sense: Option<String>,
+}
+
+#[derive(Debug, SerJson, DeJson)]
+struct Example {
+    text: String,
+    _type: Option<String>,
+    english: Option<String>,
 }
