@@ -175,10 +175,14 @@ function on_answer_guessed(event) {
     feedback.textContent = "Väärin...";
     feedback.setAttribute("title", "Wrong...");
   }
+  var percent_correct = Math.floor(100.0 * correct / (correct + wrong));
   const record = document
     .getElementById("record");
-  record.textContent = `oikea: ${correct}, väärin: ${wrong}`;
-  record.setAttribute("title", `correct: ${correct}, wrong: ${wrong}`);
+  record.textContent =
+    `oikea: ${correct}, väärin: ${wrong}, ${percent_correct}%`;
+  record.setAttribute(
+    "title", `correct: ${correct}, wrong: ${wrong}, ${percent_correct}%`
+  );
 }
 
 function column_from(pronoun, negative, tense) {
