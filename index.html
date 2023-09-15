@@ -98,6 +98,9 @@ function new_prompt() {
   conjugation = data["inflection"];
   gradation = data["gradation"];
   prepare_hints();
+  document
+    .getElementById("look-it-up")
+    .setAttribute("href", `https://wiktionary.org/wiki/${prompt}#Finnish`);
   document.getElementById("prompt").textContent = prompt;
 }
 
@@ -320,7 +323,17 @@ function present_gradation_hint() {
           >Sinä</label>
         <div style="width: 0.5em"></div>
         <div class="flex-column">
-          <div id="prompt" class="question-and-answer">verbi</div>
+          <div class="flex-row" style="align-items: end">
+            <div id="prompt" class="question-and-answer">verbi</div>
+            <div style="width: 0.5em"></div>
+            <a
+              id="look-it-up"
+              href="https://wiktionary.org"
+              title="What is this word?"
+              target="_none"
+              style="font-size: 15pt;"
+            >Mitä on tämä sana?</a>
+          </div>
           <div class="flex-row">
             <input
               id="answer-input"
