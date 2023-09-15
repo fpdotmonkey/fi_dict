@@ -313,27 +313,19 @@ function present_gradation_hint() {
 </head>
 <body>
   <main>
+    <h1 title="Guess the word form">Arvaa sanamuoto</h1>
     <form id="answer" onsubmit="on_answer_guessed(event)">
-      <div class="flex-row flex-align-end">
-        <label
-          id="answer-label"
-          class="flex-no-shrink"
-          for="prompt"
-          title="You"
-          >Sinä</label>
-        <div style="width: 0.5em"></div>
-        <div class="flex-column">
-          <div class="flex-row" style="align-items: end">
-            <div id="prompt" class="question-and-answer">verbi</div>
-            <div style="width: 0.5em"></div>
-            <a
-              id="look-it-up"
-              href="https://wiktionary.org"
-              title="What is this word?"
-              target="_none"
-              style="font-size: 15pt;"
-            >Mitä on tämä sana?</a>
-          </div>
+      <div style="display: grid; grid-template-columns: 1fr 0.1fr 2fr;">
+          <label>Infinitiivi</label>
+          <div></div>
+          <label
+            id="answer-label"
+            class="flex-no-shrink"
+            for="prompt"
+            title="You"
+            >Sinä</label>
+          <div id="prompt" class="question-and-answer">verbi</div>
+          <div class="question-and-answer">⇒</div>
           <div class="flex-row">
             <input
               id="answer-input"
@@ -345,8 +337,14 @@ function present_gradation_hint() {
               autocapitalize="none">
             <input type="submit" value="Arvaa" title="Guess">
           </div>
-        </div>
       </div>
+      <a
+        id="look-it-up"
+        href="https://wiktionary.org"
+        title="What is this word?"
+        target="_none"
+        style="font-size: 15pt;"
+      >Mitä on tämä sana?</a>
     </form>
     <div>
       <span id="feedback" title="Guess the word form">Arvaa sanamuoto</span>
@@ -354,7 +352,7 @@ function present_gradation_hint() {
     <div><span id="record"></span></div>
     <div style="height: 1em"></div>
     <div class="flex-row">
-      <form onchange="on_muoto_change(event)">
+      <div onchange="on_muoto_change(event)">
         <fieldset style="width: 200px">
           <legend>Valitse muoto jota haluat harjoitella</legend>
           <div>
@@ -447,8 +445,8 @@ function present_gradation_hint() {
             </div>
           </div>
         </fieldset>
-      </form>
-      <form>
+      </div>
+      <div>
         <fieldset style="width: 200px">
           <legend>Hints/Vihjeet</legend>
           <div class="flex-column">
@@ -466,7 +464,7 @@ function present_gradation_hint() {
             </div>
           </div>
         </fieldset>
-      </form>
+      </div>
     </div>
   </main>
 </body>
