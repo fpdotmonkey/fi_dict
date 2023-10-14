@@ -73,6 +73,10 @@ const sql_js = initSqlJs(config)
     db_request.send();
   });
 
+const pronouns = [
+  "muoto-minä", "muoto-sinä", "muoto-hän", "muoto-me", "muoto-te", "muoto-he"
+];
+
 var pronoun = "muoto-sinä";
 var negative = false;
 var tense = "tense-present";
@@ -89,6 +93,7 @@ var correct = 0;
 var wrong = 0;
 
 function new_prompt() {
+  randomize_pronoun();
   const column = column_from(pronoun, negative, tense);
   data = db.prepare(
     `SELECT * FROM verbs WHERE ${column} != '-' ORDER BY RANDOM() LIMIT 1`
@@ -111,6 +116,49 @@ function refresh_prompt() {
   ).getAsObject({$start:1, $end:1});
   answer = data[column];
   prepare_hints()
+}
+
+function randomize_pronoun() {
+  pronoun = pronouns[Math.floor(pronouns.length * Math.random())];
+
+  var new_answer_label = "";
+  var new_answer_label_alt = "";
+
+  switch (pronoun) {
+  case "muoto-minä":
+    new_answer_label = new_answer_label.concat("Minä");
+    new_answer_label_alt = new_answer_label_alt.concat("I");
+    break;
+  case "muoto-sinä":
+    new_answer_label = new_answer_label.concat("Sinä");
+    new_answer_label_alt = new_answer_label_alt.concat("You");
+    break;
+  case "muoto-hän":
+    new_answer_label = new_answer_label.concat("Hän");
+    new_answer_label_alt = new_answer_label_alt.concat("He/She/It");
+    break;
+  case "muoto-me":
+    new_answer_label = new_answer_label.concat("Me");
+    new_answer_label_alt = new_answer_label_alt.concat("We");
+    break;
+  case "muoto-te":
+    new_answer_label = new_answer_label.concat("Te");
+    new_answer_label_alt = new_answer_label_alt.concat("Y'all");
+    break;
+  case "muoto-he":
+    new_answer_label = new_answer_label.concat("He");
+    new_answer_label_alt = new_answer_label_alt.concat("They");
+    break;
+  default:
+    console.log("unknown pronoun");
+    new_answer_label = new_answer_label.concat("????");
+    new_answer_label_alt = new_answer_label_alt.concat("????");
+    break;
+  }
+
+  const answer_label = document.getElementById("answer-label");
+  answer_label.textContent = new_answer_label;
+  answer_label.setAttribute("title", new_answer_label_alt);
 }
 
 function prepare_hints() {
@@ -146,8 +194,12 @@ function prepare_hints() {
     }
     switch (conjugation_data["gradation_style"]) {
     case "StrongWeak":
-      gradation_hint =
-        `${gradation_data["strong"]} ${transition_symbol} ${weak_form}`;
+      if (!["muoto-hän", "muoto-he"].includes(pronoun)) {
+        gradation_hint =
+          `${gradation_data["strong"]} ${transition_symbol} ${weak_form}`;
+      } else {
+        gradation_hint = "No gradation";
+      }
       break;
     case "WeakStrong":
       gradation_hint =
@@ -244,9 +296,6 @@ function on_muoto_change(event) {
     break;
   }
 
-  var new_answer_label = "";
-  var new_answer_label_alt = "";
-
   if (negative) {
     new_answer_label = "(negatiivi) ";
     new_answer_label_alt = "(negative) ";
@@ -263,41 +312,6 @@ function on_muoto_change(event) {
     console.log("unknown tense");
   }
 
-  switch (pronoun) {
-  case "muoto-minä":
-    new_answer_label = new_answer_label.concat("Minä");
-    new_answer_label_alt = new_answer_label_alt.concat("I");
-    break;
-  case "muoto-sinä":
-    new_answer_label = new_answer_label.concat("Sinä");
-    new_answer_label_alt = new_answer_label_alt.concat("You");
-    break;
-  case "muoto-hän":
-    new_answer_label = new_answer_label.concat("Hän");
-    new_answer_label_alt = new_answer_label_alt.concat("He/She/It");
-    break;
-  case "muoto-me":
-    new_answer_label = new_answer_label.concat("Me");
-    new_answer_label_alt = new_answer_label_alt.concat("We");
-    break;
-  case "muoto-te":
-    new_answer_label = new_answer_label.concat("Te");
-    new_answer_label_alt = new_answer_label_alt.concat("Y'all");
-    break;
-  case "muoto-he":
-    new_answer_label = new_answer_label.concat("He");
-    new_answer_label_alt = new_answer_label_alt.concat("They");
-    break;
-  default:
-    console.log("unknown pronoun");
-    new_answer_label = new_answer_label.concat("????");
-    new_answer_label_alt = new_answer_label_alt.concat("????");
-    break;
-  }
-
-  const answer_label = document.getElementById("answer-label");
-  answer_label.textContent = new_answer_label;
-  answer_label.setAttribute("title", new_answer_label_alt);
   refresh_prompt();
 }
 
@@ -316,7 +330,7 @@ function present_gradation_hint() {
     <h1 title="Guess the word form">Arvaa sanamuoto</h1>
     <form id="answer" onsubmit="on_answer_guessed(event)">
       <div style="display: grid; grid-template-columns: 1fr 0.1fr 2fr;">
-          <label>Infinitiivi</label>
+          <label title="Infinitive">Infinitiivi</label>
           <div></div>
           <label
             id="answer-label"
@@ -354,93 +368,31 @@ function present_gradation_hint() {
     <div class="flex-row">
       <div onchange="on_muoto_change(event)">
         <fieldset style="width: 200px">
-          <legend>Valitse muoto jota haluat harjoitella</legend>
-          <div>
+          <legend title="Choose the form you want to practice">Valitse muoto jota haluat harjoitella</legend>
+          <div title="Negative">
             <input
               type="checkbox" id="negative" name="negative" autocomplete="off">
             <label for="negative" class="muoto">Negatiivi</label>
           </div>
-          <label>Pronomini</label>
-          <div class="flex-row">
-            <div class="flex-column">
-              <div>
-                <input
-                  type="radio"
-                  name="muoto"
-                  value="muoto-minä"
-                  id="muoto-minä"
-                  autocomplete="off">
-                <label for="muoto-minä" class="muoto">Minä</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  checked="checked"
-                  name="muoto"
-                  value="muoto-sinä"
-                  id="muoto-sinä"
-                  autocomplete="off">
-                <label for="muoto-sinä" class="muoto">Sinä</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  name="muoto"
-                  value="muoto-hän"
-                  id="muoto-hän"
-                  autocomplete="off">
-                <label for="muoto-hän" class="muoto">Hän</label>
-              </div>
-            </div>
-            <div class="flex-column">
-              <div>
-                <input
-                  type="radio"
-                  name="muoto"
-                  value="muoto-me"
-                  id="muoto-me"
-                  autocomplete="off">
-                <label for="muoto-me" class="muoto">Me</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  name="muoto"
-                  value="muoto-te"
-                  id="muoto-te"
-                  autocomplete="off">
-                <label for="muoto-te" class="muoto">Te</label>
-              </div>
-              <div>
-                <input
-                  type="radio"
-                  name="muoto"
-                  value="muoto-he"
-                  id="muoto-he"
-                  autocomplete="off">
-                <label for="muoto-he" class="muoto">He</label>
-              </div>
-            </div>
-          </div>
-          <label>Aikamuoto</label>
+          <label title="Tense">Aikamuoto</label>
           <div>
-            <div>
+            <div title="Present">
               <input
-                  type="radio"
-                  checked="checked"
-                  name="tense"
-                  value="tense-present"
-                  id="tense-present"
-                  autocomplete="off">
+                type="radio"
+                checked="checked"
+                name="tense"
+                value="tense-present"
+                id="tense-present"
+                autocomplete="off">
               <label for="tense-present" class="muoto">Preesens</label>
             </div>
-            <div>
+            <div title="Past">
               <input
-                  type="radio"
-                  name="tense"
-                  value="tense-past"
-                  id="tense-past"
-                  autocomplete="off">
+                type="radio"
+                name="tense"
+                value="tense-past"
+                id="tense-past"
+                autocomplete="off">
               <label for="tense-past" class="muoto">Mennyt</label>
             </div>
           </div>
