@@ -38,6 +38,10 @@ legend {
   align-items: end;
 }
 
+.flex-align-center {
+  align-items: center;
+}
+
 .flex-no-shrink {
   flex-shrink: 0;
 }
@@ -50,6 +54,13 @@ legend {
 
 .muoto {
   font-size: 20px;
+}
+
+.guess-container {
+  display: grid;
+  grid-template-columns: 1fr 0.1fr 2fr;
+  gap: 10px;
+  padding: 10px;
 }
 
   </style>
@@ -329,28 +340,30 @@ function present_gradation_hint() {
   <main>
     <h1 title="Guess the word form">Arvaa sanamuoto</h1>
     <form id="answer" onsubmit="on_answer_guessed(event)">
-      <div style="display: grid; grid-template-columns: 1fr 0.1fr 2fr;">
-          <label title="Infinitive">Infinitiivi</label>
-          <div></div>
-          <label
-            id="answer-label"
-            class="flex-no-shrink"
-            for="prompt"
-            title="You"
-            >Sinä</label>
-          <div id="prompt" class="question-and-answer">verbi</div>
-          <div class="question-and-answer">⇒</div>
-          <div class="flex-row">
-            <input
-              id="answer-input"
-              class="question-and-answer"
-              type="text"
-              placeholder="sanamuoto"
-              spellcheck="false"
-              autocorrect="off"
-              autocapitalize="none">
-            <input type="submit" value="Arvaa" title="Guess">
-          </div>
+      <div class="guess-container">
+        <label title="Infinitive">Infinitiivi</label>
+        <div></div>
+        <label
+          id="answer-label"
+          class="flex-no-shrink"
+          for="prompt"
+          title="You"
+          >Sinä</label>
+        <div id="prompt" class="question-and-answer">verbi</div>
+        <div class="question-and-answer">⇒</div>
+        <input
+          id="answer-input"
+          class="question-and-answer"
+          type="text"
+          placeholder="sanamuoto"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="none">
+        <div></div>
+        <div class="flex-column flex-align-center" style="width: 0">
+          <input type="submit" value="Arvaa" title="Guess" style="width: 200px">
+        </div>
+        <div></div>
       </div>
       <a
         id="look-it-up"
