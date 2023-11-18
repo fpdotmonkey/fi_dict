@@ -36,7 +36,7 @@ pub trait Table {
                 .collect::<Vec<String>>()
                 .join(", "),
             data.iter()
-                .map(|datum| format!("('{}')", datum.row().join("', '")))
+                .map(|datum| format!("(\"{}\")", datum.row().join("\", \"")))
                 .collect::<Vec<String>>()
                 .join(",\n\t")
         )

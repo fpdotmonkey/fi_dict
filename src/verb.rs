@@ -2,7 +2,7 @@ use crate::inflection;
 use crate::kaikki;
 use crate::table::Table;
 
-pub fn extract(words: Vec<kaikki::Sana>) -> Vec<Verb> {
+pub fn extract(words: &Vec<kaikki::Sana>) -> Vec<Verb> {
     words
         .iter()
         .filter_map(|word| Verb::new(word).ok())

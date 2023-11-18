@@ -3,6 +3,7 @@ pub use std;
 
 mod inflection;
 mod kaikki;
+mod noun;
 mod table;
 mod verb;
 
@@ -25,22 +26,40 @@ fn main() {
         .filter_map(|word_data| kaikki::Sana::from_json(word_data.unwrap()))
         .collect();
     println!(
-        "JSON parsing: {}s, {:.3}ms/word",
+        "JSON parsing: {} s, {} words, {:.3} ms/word",
         now.elapsed().as_secs(),
+        words.len(),
         1000.0 * now.elapsed().as_secs_f64() / words.len() as f64
     );
 
     println!("parsing verb data");
     let now: std::time::Instant = std::time::Instant::now();
 
-    let verbs = verb::extract(words);
+    let verbs = verb::extract(&words);
     println!(
-        "Verb parsing: {}s, {:.3}ms/word",
+        "Verb parsing: {} s, {} words, {:.3} ms/word",
         now.elapsed().as_secs(),
+        verbs.len(),
         1000.0 * now.elapsed().as_secs_f64() / verbs.len() as f64
     );
 
+    println!("parsing noun data");
+    let now: std::time::Instant = std::time::Instant::now();
+
+    let nouns = noun::extract(&words);
+    println!(
+        "Noun parsing: {} s, {} words, {:.3} ms/word",
+        now.elapsed().as_secs(),
+        nouns.len(),
+        1000.0 * now.elapsed().as_secs_f64() / nouns.len() as f64
+    );
+
     match std::fs::remove_file("verbit.sqlite") {
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => panic!("{}", error),
+    }
+    match std::fs::remove_file("substantiivit.sqlite") {
         Ok(_) => {}
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
         Err(error) => panic!("{}", error),
@@ -69,6 +88,15 @@ fn main() {
             panic!("{}", error)
         }
     };
+
+    let connection = sqlite::open("substantiivit.sqlite").unwrap();
+    match connection.execute(noun::create_table("nouns", nouns)) {
+        Ok(_) => {}
+        Err(error) => {
+            println!("{}", noun::Noun::create_table("nouns"));
+            panic!("{}", error)
+        }
+    }
 
     println!("Table generation: {}ms", now.elapsed().as_millis());
 }

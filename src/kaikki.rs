@@ -41,6 +41,33 @@ impl Sana {
         false
     }
 
+    pub fn is_nominal(&self) -> bool {
+        let pos = &self.pos;
+        if pos != "noun" && pos != "adj" {
+            return false;
+        }
+        if let Some(forms) = &self.forms {
+            if !forms.is_empty() {
+                if let Some(head_templates) = &self.head_templates {
+                    if let Some(head_template) = head_templates.get(0) {
+                        match head_template.name.as_str() {
+                            "head" => {
+                                if let Some(secondary_pos) = head_template.args.get("2") {
+                                    if secondary_pos == "nouns" {
+                                        return true;
+                                    }
+                                }
+                            }
+                            "fi-adj" => return true,
+                            _ => (),
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
     pub fn expansion(&self) -> Option<&String> {
         if let Some(head_template) = &self.head_templates {
             if let Some(head_template) = head_template.get(0) {
