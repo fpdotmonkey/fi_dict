@@ -344,10 +344,33 @@ enum Kind<'a> {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct Data {
-    present: Inflections,
-    past: Inflections,
+    first_sing_pres_ind: String,
+    second_sing_pres_ind: String,
+    third_sing_pres_ind: String,
+    first_plur_pres_ind: String,
+    second_plur_pres_ind: String,
+    third_plur_pres_ind: String,
+    first_sing_past_ind: String,
+    second_sing_past_ind: String,
+    third_sing_past_ind: String,
+    first_plur_past_ind: String,
+    second_plur_past_ind: String,
+    third_plur_past_ind: String,
+    neg_first_sing_pres_ind: String,
+    neg_second_sing_pres_ind: String,
+    neg_third_sing_pres_ind: String,
+    neg_first_plur_pres_ind: String,
+    neg_second_plur_pres_ind: String,
+    neg_third_plur_pres_ind: String,
+    neg_first_sing_past_ind: String,
+    neg_second_sing_past_ind: String,
+    neg_third_sing_past_ind: String,
+    neg_first_plur_past_ind: String,
+    neg_second_plur_past_ind: String,
+    neg_third_plur_past_ind: String,
+
     infinitive: String,
     conjugation: Option<inflection::Conjugation>,
     gradation: Option<inflection::Gradation>,
@@ -361,24 +384,12 @@ impl Data {
         let Some(infinitive) = word_data.expansion() else {
             return Err("no infinitive form");
         };
-        let mut present: Inflections = Inflections {
-            positive: Default::default(),
-            negative: Default::default(),
-        };
-        let mut past: Inflections = Inflections {
-            positive: Default::default(),
-            negative: Default::default(),
-        };
-
-        const PERSON_TAGS: [&str; 3] = ["first-person", "second-person", "third-person"];
-        const PLURAL_TAGS: [&str; 2] = ["singular", "plural"];
-        const NEGATIVE_TAG: &str = "negative";
-        const TENSE_TAGS: [&str; 2] = ["present", "past"];
-        const MOOD_TAG: &str = "indicative";
 
         let Some(forms): Option<&Vec<kaikki::Form>> = word_data.forms() else {
             return Err("no forms");
         };
+
+        let mut data: Data = Default::default();
 
         let conjugation: Option<inflection::Conjugation> = match word_data.inflection_templates() {
             Some(templates) => {
@@ -397,51 +408,93 @@ impl Data {
             gradation = inflection::Gradation::from_template(conjugation_class.name(), infinitive);
         }
 
-        for tense in TENSE_TAGS.iter() {
-            let mut positive: [String; 6] = Default::default();
-            let mut negative: [String; 6] = Default::default();
-            for positivity in 0..2 {
-                let mut words: [String; 6] = Default::default();
-                let mut i = 0;
-                for plural in PLURAL_TAGS.iter() {
-                    for person in PERSON_TAGS.iter() {
-                        let tags =
-                            std::collections::HashSet::from([MOOD_TAG, tense, plural, person]);
-                        words[i] = forms
-                            .iter()
-                            .find(|&form| {
-                                form.tags().is_superset(&tags)
-                                    && (if positivity == 0 {
-                                        !form.tags().contains(NEGATIVE_TAG)
-                                    } else {
-                                        form.tags().contains(NEGATIVE_TAG)
-                                    })
-                            })
-                            .map(|form| form.name().to_string())
-                            .unwrap_or("-".to_string());
-                        i += 1;
-                    }
+        data.infinitive = infinitive.into();
+        data.conjugation = conjugation;
+        data.gradation = gradation;
+
+        for form in forms.iter() {
+            let tags = form.tags();
+            let mut tags = tags.iter().collect::<Vec<_>>();
+            tags.sort();
+            match tags[..] {
+                [&"first-person", &"indicative", &"present", &"singular"] => {
+                    data.first_sing_pres_ind = form.name().into();
                 }
-                if positivity == 0 {
-                    positive = words;
-                } else {
-                    negative = words;
+                [&"indicative", &"present", &"second-person", &"singular"] => {
+                    data.second_sing_pres_ind = form.name().into();
                 }
-            }
-            if tense == &"present" {
-                present = Inflections { positive, negative };
-            } else {
-                past = Inflections { positive, negative }
+                [&"indicative", &"present", &"singular", &"third-person"] => {
+                    data.third_sing_pres_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"plural", &"present"] => {
+                    data.first_plur_pres_ind = form.name().into();
+                }
+                [&"indicative", &"plural", &"present", &"second-person"] => {
+                    data.second_plur_pres_ind = form.name().into();
+                }
+                [&"indicative", &"plural", &"present", &"third-person"] => {
+                    data.third_plur_pres_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"past", &"singular"] => {
+                    data.first_sing_past_ind = form.name().into();
+                }
+                [&"indicative", &"past", &"second-person", &"singular"] => {
+                    data.second_sing_past_ind = form.name().into();
+                }
+                [&"indicative", &"past", &"singular", &"third-person"] => {
+                    data.third_sing_past_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"past", &"plural"] => {
+                    data.first_plur_past_ind = form.name().into();
+                }
+                [&"indicative", &"past", &"plural", &"second-person"] => {
+                    data.second_plur_past_ind = form.name().into();
+                }
+                [&"indicative", &"past", &"plural", &"third-person"] => {
+                    data.third_plur_past_ind = form.name().into();
+                }
+
+                [&"first-person", &"indicative", &"negative", &"present", &"singular"] => {
+                    data.neg_first_sing_pres_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"present", &"second-person", &"singular"] => {
+                    data.neg_second_sing_pres_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"present", &"singular", &"third-person"] => {
+                    data.neg_third_sing_pres_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"negative", &"plural", &"present"] => {
+                    data.neg_first_plur_pres_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"plural", &"present", &"second-person"] => {
+                    data.neg_second_plur_pres_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"plural", &"present", &"third-person"] => {
+                    data.neg_third_plur_pres_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"negative", &"past", &"singular"] => {
+                    data.neg_first_sing_past_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"past", &"second-person", &"singular"] => {
+                    data.neg_second_sing_past_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"past", &"singular", &"third-person"] => {
+                    data.neg_third_sing_past_ind = form.name().into();
+                }
+                [&"first-person", &"indicative", &"negative", &"past", &"plural"] => {
+                    data.neg_first_plur_past_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"past", &"plural", &"second-person"] => {
+                    data.neg_second_plur_past_ind = form.name().into();
+                }
+                [&"indicative", &"negative", &"past", &"plural", &"third-person"] => {
+                    data.neg_third_plur_past_ind = form.name().into();
+                }
+                _ => {}
             }
         }
 
-        Ok(Data {
-            present,
-            past,
-            infinitive: infinitive.to_string(),
-            gradation,
-            conjugation,
-        })
+        Ok(data)
     }
 
     fn inflection(&self, kind: Kind) -> String {
@@ -452,8 +505,48 @@ impl Data {
                 person,
                 tense,
             } => match tense {
-                Tense::Present => self.present.inflection(positive, person),
-                Tense::Past => self.past.inflection(positive, person),
+                Tense::Present => {
+                    if positive {
+                        match person {
+                            Person::FirstSingular => self.first_sing_pres_ind.clone(),
+                            Person::SecondSingular => self.second_sing_pres_ind.clone(),
+                            Person::ThirdSingular => self.third_sing_pres_ind.clone(),
+                            Person::FirstPlural => self.first_plur_pres_ind.clone(),
+                            Person::SecondPlural => self.second_plur_pres_ind.clone(),
+                            Person::ThirdPlural => self.third_plur_pres_ind.clone(),
+                        }
+                    } else {
+                        match person {
+                            Person::FirstSingular => self.neg_first_sing_pres_ind.clone(),
+                            Person::SecondSingular => self.neg_second_sing_pres_ind.clone(),
+                            Person::ThirdSingular => self.neg_third_sing_pres_ind.clone(),
+                            Person::FirstPlural => self.neg_first_plur_pres_ind.clone(),
+                            Person::SecondPlural => self.neg_second_plur_pres_ind.clone(),
+                            Person::ThirdPlural => self.neg_third_plur_pres_ind.clone(),
+                        }
+                    }
+                }
+                Tense::Past => {
+                    if positive {
+                        match person {
+                            Person::FirstSingular => self.first_sing_past_ind.clone(),
+                            Person::SecondSingular => self.second_sing_past_ind.clone(),
+                            Person::ThirdSingular => self.third_sing_past_ind.clone(),
+                            Person::FirstPlural => self.first_plur_past_ind.clone(),
+                            Person::SecondPlural => self.second_plur_past_ind.clone(),
+                            Person::ThirdPlural => self.third_plur_past_ind.clone(),
+                        }
+                    } else {
+                        match person {
+                            Person::FirstSingular => self.neg_first_sing_past_ind.clone(),
+                            Person::SecondSingular => self.neg_second_sing_past_ind.clone(),
+                            Person::ThirdSingular => self.neg_third_sing_past_ind.clone(),
+                            Person::FirstPlural => self.neg_first_plur_past_ind.clone(),
+                            Person::SecondPlural => self.neg_second_plur_past_ind.clone(),
+                            Person::ThirdPlural => self.neg_third_plur_past_ind.clone(),
+                        }
+                    }
+                }
             },
         }
     }
@@ -470,35 +563,5 @@ impl Data {
 
     pub fn infinitive(&self) -> Infinitive {
         Infinitive { word_data: self }
-    }
-}
-
-#[derive(Debug)]
-struct Inflections {
-    positive: [String; 6],
-    negative: [String; 6],
-}
-
-impl Inflections {
-    fn inflection(&self, positive: bool, person: &Person) -> String {
-        if positive {
-            match person {
-                Person::FirstSingular => self.positive[0].clone(),
-                Person::SecondSingular => self.positive[1].clone(),
-                Person::ThirdSingular => self.positive[2].clone(),
-                Person::FirstPlural => self.positive[3].clone(),
-                Person::SecondPlural => self.positive[4].clone(),
-                Person::ThirdPlural => self.positive[5].clone(),
-            }
-        } else {
-            match person {
-                Person::FirstSingular => self.negative[0].clone(),
-                Person::SecondSingular => self.negative[1].clone(),
-                Person::ThirdSingular => self.negative[2].clone(),
-                Person::FirstPlural => self.negative[3].clone(),
-                Person::SecondPlural => self.negative[4].clone(),
-                Person::ThirdPlural => self.negative[5].clone(),
-            }
-        }
     }
 }
