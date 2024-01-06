@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+body {
+  font-size: 25pt;
+}
+
+input[type="submit"]
+{
+    font-size:25px;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: left;
+  max-width: 1000px;
+}
+
+legend {
+  font-size: 20px;
+}
+
+.flex-row {
+  display: flex;
+  flex-flow: row;
+}
+
+.flex-column {
+  display: flex;
+  flex-flow: column;
+}
+
+.flex-align-end {
+  align-items: end;
+}
+
+.flex-align-center {
+  align-items: center;
+}
+
+.flex-no-shrink {
+  flex-shrink: 0;
+}
+
+.question-and-answer {
+  font-size: 50px;
+  font-family: serif;
+  width: 100%;
+}
+
+.muoto {
+  font-size: 20px;
+}
+
+.guess-container {
+  display: grid;
+  grid-template-columns: 1fr 0.1fr 2.6fr;
+  gap: 10px;
+  padding: 10px;
+}
+
+  </style>
+  <script src='node_modules/sql.js/dist/sql-wasm.js'></script>
+  <script>
+const config = {
+  locateFile: filename => `node_modules/sql.js/dist/${filename}`
+};
+
+var db = null;
+
+const sql_js = initSqlJs(config)
+  .then(function(SQL) {
+    var db_request = new XMLHttpRequest();
+    db_request.responseType = "arraybuffer";
+    db_request.onloadend = function() {
+      db = new SQL.Database(new Uint8Array(db_request.response));
+      new_prompt();
+    };
+    db_request.open("GET", "substantiivit.sqlite", true);
+    db_request.send();
+  });
+
+const forms = [
+  "nominative", "nominative_plural", "genitive", "genitive_plural", "partitive", "partitive_plural", "inessive", "inessive_plural", "elative", "elative_plural", "illative", "illative_plural", "adessive", "adessive_plural", "ablative", "ablative_plural", "allative", "allative_plural", "essive", "essive_plural", "translative", "translative_plural"
+];
+
+var form = "partitive";
+var plural = false;
+var tense = "tense-present";
+
+var prompt = null;
+var answer = null;
+var data = null;
+var conjugation = null;
+var conjugation_hint = null;
+var gradation = null;
+var gradation_hint = null;
+
+var correct = 0;
+var wrong = 0;
+
+function new_prompt() {
+  // randomize_form();
+  const column = column_from(form, plural);
+  data = db.prepare(
+    `SELECT * FROM nouns WHERE ${column} != '-' AND nominative != '-' ORDER BY RANDOM() LIMIT 1`
+  ).getAsObject({$start:1, $end:1});
+  prompt = data["nominative"];
+  if (prompt === "-") {
+    prompt = "bikinit";
+  }
+  answer = data[column];
+  conjugation = data["nominative"];
+  gradation = data["gradation"];
+  // prepare_hints();
+  document
+    .getElementById("look-it-up")
+    .setAttribute("href", `https://wiktionary.org/wiki/${prompt}#Finnish`);
+  document.getElementById("prompt").textContent = prompt;
+}
+
+function refresh_prompt() {
+  const column = column_from(form, plural);
+  data = db.prepare(
+    `SELECT ${column} FROM nouns WHERE nominative = '${prompt}'`
+  ).getAsObject({$start:1, $end:1});
+  answer = data[column];
+  // prepare_hints()
+}
+
+// function prepare_hints() {
+//   const transition_symbol = "⇒"; // Rightwards Double Arrow, U+21d2
+//   const conjugation_data = db.prepare(
+//     `SELECT * FROM inflections WHERE conjugation = ${conjugation}`
+//   ).getAsObject({$start:1, $end:1});
+//   const gradation_data = db.prepare(
+//     `SELECT * FROM gradations WHERE gradation = ${gradation}`
+//   ).getAsObject({$start:1, $end:1});
+
+//   switch (tense) {
+//   case "tense-present":
+//     conjugation_hint = 
+//       `${conjugation_data["hint_infinitive"]} ${transition_symbol} ${conjugation_data["hint_present"]}`;
+//     break;
+//   case "tense-past":
+//     conjugation_hint = 
+//       `${conjugation_data["hint_infinitive"]} ${transition_symbol} ${conjugation_data["hint_past"]}`;
+//     break;
+//   default:
+//     conjugation_hint = "No hint available, you can try looking it up";
+//     break;
+//   }
+
+//   // TODO: give a correct hint for hän/he forms
+//   if (gradation === 0 || conjugation_data["gradation_style"] == "None") {
+//     gradation_hint = "No gradation";
+//   } else {
+//     var weak_form = gradation_data["weak"];
+//     if (weak_form === "") {
+//       weak_form = "∅"; // empty set, U+2205
+//     }
+//     switch (conjugation_data["gradation_style"]) {
+//     case "StrongWeak":
+//       if (!["muoto-hän", "muoto-he"].includes(form)) {
+//         gradation_hint =
+//           `${gradation_data["strong"]} ${transition_symbol} ${weak_form}`;
+//       } else {
+//         gradation_hint = "No gradation";
+//       }
+//       break;
+//     case "WeakStrong":
+//       gradation_hint =
+//         `${weak_form} ${transition_symbol} ${gradation_data["strong"]}`;
+//       break;
+//     default:
+//       gradation_hint = "No hint available, you can try loooking it up";
+//       break;
+//     }
+//   }
+//   document.getElementById("hint-conjugation").textContent = "";
+//   document.getElementById("hint-gradation").textContent = "";
+// }
+
+function on_answer_guessed(event) {
+  // TODO: answers with apostrophe-like characters should accept '
+  event.preventDefault();
+  const guess = event["target"][0]["value"];
+  const feedback = document.getElementById("feedback");
+  if (guess.toLowerCase() === answer.toLowerCase()) {
+    correct += 1;
+    feedback.textContent = "Oikea!";
+    feedback.setAttribute("title", "Correct!");
+    document.getElementById("answer-input").value = "";
+    new_prompt();
+  } else {
+    wrong += 1;
+    feedback.textContent = "Väärin...";
+    feedback.setAttribute("title", "Wrong...");
+  }
+  var percent_correct = Math.floor(100.0 * correct / (correct + wrong));
+  const record = document
+    .getElementById("record");
+  record.textContent =
+    `oikea: ${correct}, väärin: ${wrong}, ${percent_correct}%`;
+  record.setAttribute(
+    "title", `correct: ${correct}, wrong: ${wrong}, ${percent_correct}%`
+  );
+}
+
+function column_from(form, plural) {
+  var column = "";
+  switch (form) {
+  case "nominative":
+    column = "nominative"
+    break;
+  case "genitive":
+    column = "genitive"
+    break;
+  case "partitive":
+    column = "partitive"
+    break;
+  case "inessive":
+    column = "inessive"
+    break;
+  case "elative":
+    column = "elative"
+    break;
+  case "illative":
+    column = "illative"
+    break;
+  case "adessive":
+    column = "adessive"
+    break;
+  case "ablative":
+    column = "ablative"
+    break;
+  case "allative":
+    column = "allative"
+    break;
+  case "essive":
+    column = "essive"
+    break;
+  case "translative":
+    column = "translative"
+    break;
+  default:
+    console.log(`unknown form "${form}"`);
+    column = "???"
+    break;
+  }
+  var plurality = plural ? "_plural" : "";
+
+  return `${column}${plurality}`;
+}
+
+function on_muoto_change(event) {
+  switch (event["target"]["name"]) {
+  case "inflection":
+    form = event["target"]["value"];
+    break;
+  case "plural":
+    plural = event["target"]["checked"];
+    break;
+  default:
+    console.log("unhandled muoto change");
+    break;
+  }
+
+  switch (form) {
+  case "nominative":
+    new_answer_label = new_answer_label = "Mikä";
+    new_answer_label_alt = new_answer_label_alt = "Mikä";
+    break;
+  case "genitive":
+    new_answer_label = new_answer_label = "Genetiivi";
+    new_answer_label_alt = new_answer_label_alt = "Genetive";
+    break;
+  case "partitive":
+    new_answer_label = new_answer_label = "Mitä";
+    new_answer_label_alt = new_answer_label_alt = "Mitä";
+    break;
+  case "inessive":
+    new_answer_label = new_answer_label = "Missä";
+    new_answer_label_alt = new_answer_label_alt = "Missä";
+    break;
+  case "elative":
+    new_answer_label = new_answer_label = "Mistä";
+    new_answer_label_alt = new_answer_label_alt = "Mistä";
+    break;
+  case "illative":
+    new_answer_label = new_answer_label = "Mihin";
+    new_answer_label_alt = new_answer_label_alt = "Mihin";
+    break;
+  case "adessive":
+    new_answer_label = new_answer_label = "Millä";
+    new_answer_label_alt = new_answer_label_alt = "Millä";
+    break;
+  case "ablative":
+    new_answer_label = new_answer_label = "Miltä";
+    new_answer_label_alt = new_answer_label_alt = "Miltä";
+    break;
+  case "allative":
+    new_answer_label = new_answer_label = "Mille";
+    new_answer_label_alt = new_answer_label_alt = "Mille";
+    break;
+  case "essive":
+    new_answer_label = new_answer_label = "Minä";
+    new_answer_label_alt = new_answer_label_alt = "Minä";
+    break;
+  case "translative":
+    new_answer_label = new_answer_label = "Miksi";
+    new_answer_label_alt = new_answer_label_alt = "Miksi";
+    break;
+  default:
+    console.log("unknown form");
+    new_answer_label = new_answer_label = "????";
+    new_answer_label_alt = new_answer_label_alt = "????";
+    break;
+  }
+
+  if (plural) {
+    new_answer_label = new_answer_label.concat(" (monikko)");
+    new_answer_label_alt = new_answer_label_alt.concat(" (plural)");
+  }
+
+  refresh_prompt();
+  const answer_label = document.getElementById("answer-label");
+  answer_label.textContent = new_answer_label;
+  answer_label.setAttribute("title", new_answer_label_alt);
+}
+
+function present_conjugation_hint() {
+  document.getElementById("hint-conjugation").textContent = conjugation_hint;
+}
+
+function present_gradation_hint() {
+  document.getElementById("hint-gradation").textContent = gradation_hint;
+}
+
+  </script>
+</head>
+<body>
+  <main>
+    <h1 title="Guess the word form">Arvaa sanamuoto</h1>
+    <form id="answer" onsubmit="on_answer_guessed(event)">
+      <div class="guess-container">
+        <label title="Mikä" style="text-align: right">Mikä</label>
+        <div></div>
+        <div id="prompt" class="question-and-answer">substantiivi</div>
+        <label
+          id="answer-label"
+          class="flex-no-shrink"
+          style="text-align: right"
+          for="prompt"
+          title="You"
+          >Mitä</label>
+        <div></div>
+        <input
+          id="answer-input"
+          class="question-and-answer"
+          type="text"
+          placeholder="sanamuoto"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="none">
+        <div></div>
+        <div class="flex-column flex-align-center" style="width: 0">
+          <input type="submit" value="Arvaa" title="Guess" style="width: 200px">
+        </div>
+        <div></div>
+      </div>
+      <a
+        id="look-it-up"
+        href="https://wiktionary.org"
+        title="What is this word?"
+        target="_none"
+        style="font-size: 15pt;"
+      >Mitä on tämä sana?</a>
+    </form>
+    <div>
+      <span id="feedback" title="Guess the word form">Arvaa sanamuoto</span>
+    </div>
+    <div><span id="record"></span></div>
+    <div style="height: 1em"></div>
+    <div class="flex-row">
+      <div onchange="on_muoto_change(event)">
+        <fieldset style="width: 200px">
+          <legend title="Choose the form you want to practice">Muoto</legend>
+          <div title="plural">
+            <input
+              type="checkbox" id="plural" name="plural" autocomplete="off">
+            <label for="plural" class="muoto" title="plural">Monikko</label>
+          </div>
+          <div>
+            <div title="Genetiivi">
+              <input
+                type="radio"
+                name="inflection"
+                value="genitive"
+                id="genitive"
+                autocomplete="off">
+              <label for="genitive" class="muoto">Genetiivi</label>
+            </div>
+            <div title="Mitä">
+              <input
+                type="radio"
+                checked="checked"
+                name="inflection"
+                value="partitive"
+                id="partitive"
+                autocomplete="off">
+              <label for="partitive" class="muoto">Mitä</label>
+            </div>
+            <div class="flex-row">
+              <div class="flex-column">
+                <div title="Missä">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="inessive"
+                    id="inessive"
+                    autocomplete="off">
+                  <label for="inessive" class="muoto">Missä</label>
+                </div>
+                <div title="Mistä">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="elative"
+                    id="elative"
+                    autocomplete="off">
+                  <label for="elative" class="muoto">Mistä</label>
+                </div>
+                <div title="Mihin">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="illative"
+                    id="illative"
+                    autocomplete="off">
+                  <label for="illative" class="muoto">Mihin</label>
+                </div>
+              </div>
+              <div class="flex-column">
+                <div title="Millä">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="adessive"
+                    id="adessive"
+                    autocomplete="off">
+                  <label for="adessive" class="muoto">Millä</label>
+                </div>
+                <div title="Miltä">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="ablative"
+                    id="ablative"
+                    autocomplete="off">
+                  <label for="ablative" class="muoto">Miltä</label>
+                </div>
+                <div title="Mille">
+                  <input
+                    type="radio"
+                    name="inflection"
+                    value="allative"
+                    id="allative"
+                    autocomplete="off">
+                  <label for="allative" class="muoto">Mille</label>
+                </div>
+              </div>
+            </div>
+            <div title="Minä">
+              <input
+                type="radio"
+                name="inflection"
+                value="essive"
+                id="essive"
+                autocomplete="off">
+              <label for="essive" class="muoto">Minä</label>
+            </div>
+            <div title="Miksi">
+              <input
+                type="radio"
+                name="inflection"
+                value="translative"
+                id="translative"
+                autocomplete="off">
+              <label for="translative" class="muoto">Miksi</label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+      <!-- <div>
+        <fieldset style="width: 200px">
+          <legend>Hints/Vihjeet</legend>
+          <div class="flex-column">
+            <button
+              onclick="present_conjugation_hint()" type="button"
+            >Conjugation</button>
+            <div>
+              <p id="hint-conjugation"></p>
+            </div>
+            <button
+              onclick="present_gradation_hint()" type="button"
+            >Gradation</button>
+            <div>
+              <p id="hint-gradation"></p>
+            </div>
+          </div>
+        </fieldset>
+      </div> -->
+    </div>
+  </main>
+</body>
+</html>
